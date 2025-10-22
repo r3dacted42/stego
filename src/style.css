@@ -1,0 +1,4 @@
+.border {
+    border: var(--border-width) dashed var(--border-hover-color);
+    border-radius: var(--border-radius);
+}
