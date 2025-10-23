@@ -1,12 +1,14 @@
+// https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 
-const { onImageDropped } = defineProps<{
+const { onImageDropped, disabled } = defineProps<{
     onImageDropped: (img: File) => void,
+    disabled?: boolean,
 }>();
 
 const dropZone = useTemplateRef("dropZone");
-const fileInput = useTemplateRef<HTMLInputElement>("fileInput");
+const fileInput = useTemplateRef("fileInput");
 const imageFile = ref<File>();
 const imageSrc = computed(() => {
     if (!imageFile.value) return "";
@@ -16,12 +18,13 @@ const imageSrc = computed(() => {
 const handlers = {
     window: {
         handleDrop: (e: DragEvent) => {
+            if (disabled) return;
             if (e.dataTransfer && [...e.dataTransfer.items].some((item) => item.kind === "file")) {
                 e.preventDefault();
             }
         },
         handleDragOver: (e: DragEvent) => {
-            if (!e.dataTransfer) return;
+            if (!e.dataTransfer || disabled) return;
             const fileItems = [...e.dataTransfer.items].filter(
                 (item) => item.kind === "file",
             );
@@ -33,7 +36,7 @@ const handlers = {
     dropZone: {
         handleDrop: (ev: DragEvent) => {
             ev.preventDefault();
-            if (!ev.dataTransfer) return;
+            if (!ev.dataTransfer || disabled) return;
             const files = [...ev.dataTransfer.items]
                 .map((item) => item.getAsFile())
                 .filter((file) => file);
@@ -43,7 +46,7 @@ const handlers = {
             }
         },
         handleDragOver: (e: DragEvent) => {
-            if (!e.dataTransfer) return;
+            if (!e.dataTransfer || disabled) return;
             const fileItems = [...e.dataTransfer.items].filter(
                 (item) => item.kind === "file",
             );
@@ -59,7 +62,7 @@ const handlers = {
     },
     fileInput: {
         handleChange: (ev: Event) => {
-            if (!ev.target) return;
+            if (!ev.target || disabled) return;
             const elem = ev.target as HTMLInputElement;
             if (elem.files && elem.files.length > 0 && elem.files[0]) {
                 onImageDropped(elem.files[0]);
@@ -87,10 +90,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <label ref="dropZone" class="border drop-zone">
+    <label ref="dropZone" class="border drop-zone" :aria-disabled="disabled">
         <span v-if="!imageFile">drop image or click to upload</span>
-        <img v-else class="img-preview" :src="imageSrc" />
-        <input ref="fileInput" type="file" id="img-input" accept="image/*" />
+        <img v-else :src="imageSrc" />
+        <input :disabled="disabled" ref="fileInput" type="file" id="img-input" accept="image/*" />
     </label>
 </template>
 
@@ -99,17 +102,16 @@ onUnmounted(() => {
     place-content: center;
     height: fit-content;
     min-height: 12em;
-    cursor: pointer;
     border-style: dashed;
     padding: var(--border-radius);
 
     input {
         display: none;
     }
-}
 
-.img-preview {
-    flex-grow: 1;
-    max-height: 100%;
+    img {
+        max-width: 100%;
+        max-height: 100%;
+    }
 }
 </style>

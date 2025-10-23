@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ImageDecode from '../components/ImageDecode.vue';
 import ImageEncode from '../components/ImageEncode.vue';
 
 defineProps({
@@ -11,9 +12,7 @@ defineProps({
     
     <ImageEncode v-if="encode" />
 
-    <div v-else>
-        decode
-    </div>
+    <ImageDecode v-else />
 </template>
 
 <style scoped>

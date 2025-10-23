@@ -1,0 +1,1 @@
+export const MESSAGE_LENGTH_HEADER_BYTES = 4;

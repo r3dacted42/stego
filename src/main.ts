@@ -10,10 +10,11 @@ createApp(App)
     .use(createRouter({
         routes: [
             { path: '/', component: Home },
-            { path: '/text', component: Text, props: { encode: true } },
+            { path: '/text/encode', component: Text, props: { encode: true } },
             { path: '/text/decode', component: Text, props: { encode: false } },
-            { path: '/image', component: Image, props: { encode: true } },
+            { path: '/image/encode', component: Image, props: { encode: true } },
             { path: '/image/decode', component: Image, props: { encode: false } },
+            { path: '/:pathMatch(.*)*', redirect: '/' },
         ],
         history: createWebHashHistory(),
     }))

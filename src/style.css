@@ -1,4 +1,9 @@
+.full-width {
+    display: block;
+    width: 100%;
+}
+
 .border {
-    border: var(--border-width) dashed var(--border-hover-color);
+    border: var(--border-width) solid var(--border-hover-color);
     border-radius: var(--border-radius);
 }

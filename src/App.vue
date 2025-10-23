@@ -13,7 +13,7 @@
                 <span>text</span>
                 <ul>
                     <li>
-                        <RouterLink to="/text">encode</RouterLink>
+                        <RouterLink to="/text/encode">encode</RouterLink>
                     </li>
                     <li>
                         <RouterLink to="/text/decode">decode</RouterLink>
@@ -24,7 +24,7 @@
                 <span>image</span>
                 <ul>
                     <li>
-                        <RouterLink to="/image">encode</RouterLink>
+                        <RouterLink to="/image/encode">encode</RouterLink>
                     </li>
                     <li>
                         <RouterLink to="/image/decode">decode</RouterLink>
