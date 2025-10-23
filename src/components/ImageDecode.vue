@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import ImageDropZone from './ImageDropZone.vue';
 import imgDecProcWorker from '../workers/imgDecProc.worker.ts?worker';
 import type { ImgDecProcReq, ImgDecProcRes } from '../workers/types';
 
 const imageFile = ref<File>();
 const message = ref('');
+const fileAnchor = ref<{href: string, name: string}>();
 const isDecoding = ref(false);
 
 const handleImageDropped = (img: File) => {
@@ -35,6 +36,29 @@ const decodeImage = async () => {
     }
 
 }
+
+watch(message, async (newMessage) => {
+    if (!newMessage.startsWith('data:')) return;
+    try {
+        const b64Parts = newMessage.split(';');
+        var filename = "secret";
+        for (const part of b64Parts) {
+            if (part.startsWith('name=')) {
+                filename = decodeURIComponent(part.substring(5));
+                break;
+            }
+        }
+        const res = await fetch(newMessage);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        fileAnchor.value = {
+            href: url,
+            name: filename,
+        };
+    } catch (e) {
+        console.warn("couldn't convert message to file: ", e);
+    }
+});
 </script>
 
 <template>
@@ -49,4 +73,7 @@ const decodeImage = async () => {
     </div>
     <p></p>
     <textarea v-model="message" rows="5" placeholder="decoded message..." readonly></textarea>
+    <div class="full-width" style="display: flex; place-content: end;">
+        <a :href="fileAnchor?.href" :aria-disabled="!fileAnchor" :download="fileAnchor?.name">save as file...</a>
+    </div>
 </template>

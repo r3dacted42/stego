@@ -21,7 +21,8 @@ self.onmessage = (event: MessageEvent<ImgEncMsgSizeReq>) => {
 
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
-        const totalAvailableBits = data.length;
+        const totalPixels = Math.floor(data.length / 4);
+        const totalAvailableBits = totalPixels * 3; // skip alpha channel
         const totalAvailableBytes = Math.floor(totalAvailableBits / 8);
         const maxMessageSizeInBytes = totalAvailableBytes - MESSAGE_LENGTH_HEADER_BYTES;
 

@@ -34,27 +34,33 @@ self.onmessage = (event: MessageEvent<ImgEncProcReq>) => {
         payloadBytes.set(messageBytes, headerBytes.length);
 
         const totalPayloadBits = payloadBytes.length * 8;
-        const totalAvailableBits = data.length; // 1 bit per channel
+        const totalPixels = Math.floor(data.length / 4);
+        const totalAvailableBits = totalPixels * 3; // skip alpha channel
 
         if (totalPayloadBits > totalAvailableBits) {
             self.postMessage({ error: `Message is too large (${messageLength} bytes) for this image (max ${Math.floor(totalAvailableBits / 8) - MESSAGE_LENGTH_HEADER_BYTES} bytes).` } as ImgEncProcRes);
             return;
         }
 
-        let payloadBitIndex = 0;
+        let dataIndex = 0;
 
         for (let i = 0; i < payloadBytes.length; i++) {
             const payloadByte = payloadBytes[i];
             for (let j = 7; j >= 0; j--) {
+                while (dataIndex % 4 === 3) dataIndex++; // skip alpha channel
+                if (dataIndex >= data.length) {
+                    throw new Error("unexpected EOF");
+                }
+                
                 const bit = (payloadByte! >> j) & 1;
-                const dataIndex = payloadBitIndex;
                 const originalChannelValue = data[dataIndex];
                 if (bit === 1) {
                     data[dataIndex] = originalChannelValue! | 1; // set LSB = 1
                 } else {
                     data[dataIndex] = originalChannelValue! & 0xFE; // 0xFE is 11111110
                 }
-                payloadBitIndex++;
+
+                dataIndex++;
             }
         }
 

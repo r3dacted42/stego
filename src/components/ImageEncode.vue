@@ -7,13 +7,33 @@ import type { ImgEncMsgSizeReq, ImgEncMsgSizeRes, ImgEncProcReq, ImgEncProcRes }
 
 const imageFile = ref<File>();
 const maxByteSize = ref(0);
+const msgType = ref('text');
 const message = ref('');
 const isEncoding = ref(false);
 const imgRef = useTemplateRef("preview-img");
 const encImgSrc = ref('');
 
+const canChangePayload = computed(() => {
+    return (!imageFile.value || isEncoding.value);
+})
+
 const handleImageDropped = (img: File) => {
     imageFile.value = img;
+}
+
+const handlePayloadFileChange = (ev: Event) => {
+    const tgt = ev.target as HTMLInputElement;
+    const file = tgt.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+        const b64 = reader.result as string;
+        const splitIdx = b64.indexOf(';');
+        const mimePart = b64.substring(0, splitIdx);
+        const dataPart = b64.substring(splitIdx + 1);
+        message.value = `${mimePart};name=${encodeURIComponent(file.name)};${dataPart}`;
+    };
 }
 
 const msgSizeWorker = new imgEncMsgSizeWorker();
@@ -85,10 +105,23 @@ onBeforeUnmount(() => {
     <h3>encode</h3>
     <p>select an image to encode with hidden data</p>
     <ImageDropZone v-on:image-dropped="handleImageDropped" :disabled="isEncoding" />
-    <p></p>
-    <textarea :disabled="!imageFile || isEncoding" v-model="message" rows="5" placeholder="super secret message..."
-        :invalid="currentByteSize > maxByteSize" id="message"></textarea>
+    
+    <p>payload</p>
+    <span class="msg-type">
+        <label>
+            <input type="radio" v-model="msgType" name="msgType" value="text" :disabled="canChangePayload" />
+            text
+        </label>
+        <label>
+            <input type="radio" v-model="msgType" name="msgType" value="file" :disabled="canChangePayload" />
+            file
+        </label>
+    </span>
+    <textarea v-if="msgType === 'text'" :disabled="canChangePayload" v-model="message" rows="5"
+        placeholder="super secret message..." :invalid="currentByteSize > maxByteSize" id="message"></textarea>
+    <input v-if="msgType === 'file'" @change="handlePayloadFileChange" type="file" :disabled="canChangePayload"></input>
     <small class="full-width" style="text-align: end;">{{ currentByteSize }} / {{ maxByteSize ?? "?" }} bytes</small>
+    
     <div class="full-width" style="display: flex; place-content: center;">
         <button type="button" @click="encodeImage"
             :disabled="!imageFile || (currentByteSize > maxByteSize) || isEncoding">
@@ -103,6 +136,13 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.msg-type {
+    margin-top: -1em;
+    margin-bottom: 1em;
+    display: flex;
+    flex-direction: row;
+}
+
 .img-div {
     place-content: center;
     height: fit-content;
