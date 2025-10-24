@@ -140,6 +140,7 @@ onBeforeUnmount(() => {
             <img :src="encImgSrc" ref="preview-img"></img>
         </a>
     </label>
+    <small class="full-width" style="text-align: end;">click to download encoded image</small>
 
     <dialog ref="err-dialog" closedby="none">
         error: {{ errorMsg }} <br />

@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, ref, useTemplateRef } from 'vue';
 import txtEncProcWorker from '../workers/txtEncProc.worker.ts?worker';
 import type { TxtEncProcReq, TxtEncProcRes } from '../workers/types';
-import { getNamedB64 } from '../utils';
+import { copyToClipboard, getNamedB64 } from '../utils';
 
 const carrierTxt = ref('');
 const secretType = ref<'text' | 'file'>('text');
@@ -54,10 +54,6 @@ const encodeText = () => {
     }
 };
 
-const copyToClipboard = () => {
-    navigator.clipboard.writeText(encodedTxt.value);
-}
-
 onBeforeUnmount(() => {
     encWorker.terminate();
 });
@@ -87,7 +83,7 @@ onBeforeUnmount(() => {
         {{ isEncoding ? "encoding..." : "encode" }}
     </button>
 
-    <label @click="copyToClipboard" title="click to copy">
+    <label @click="copyToClipboard(encodedTxt)" title="click to copy">
         <textarea v-model="encodedTxt" rows="5" placeholder="encoded text" readonly></textarea>
         <small style="width: 100%; text-align: end;">click to copy encoded text</small>
     </label>

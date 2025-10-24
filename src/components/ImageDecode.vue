@@ -3,7 +3,7 @@ import { onBeforeUnmount, ref, useTemplateRef, watch } from 'vue';
 import ImageDropZone from './ImageDropZone.vue';
 import imgDecProcWorker from '../workers/imgDecProc.worker.ts?worker';
 import type { ImgDecProcReq, ImgDecProcRes } from '../workers/types';
-import { getUrlAndNameFromB64 } from '../utils';
+import { copyToClipboard, getUrlAndNameFromB64 } from '../utils';
 
 const imageFile = ref<File>();
 const message = ref('');
@@ -71,7 +71,10 @@ onBeforeUnmount(() => {
         decode
     </button>
     <p></p>
-    <textarea v-model="message" rows="5" placeholder="decoded message..." readonly></textarea>
+    <label @click="copyToClipboard(message)" title="click to copy">
+        <textarea v-model="message" rows="5" placeholder="decoded message" readonly></textarea>
+        <small style="width: 100%; text-align: end;">click to copy decoded message</small>
+    </label>
     <div class="full-width" style="display: flex; place-content: end;">
         <a :href="fileAnchor?.href" :aria-disabled="!fileAnchor" :download="fileAnchor?.name">save as file...</a>
     </div>

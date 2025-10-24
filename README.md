@@ -61,7 +61,7 @@ this is a standard Vue 3 + Vite project.
 
 - clone the repository:
     ```bash
-    git clone [https://github.com/r3dacted42/stego.git](https://github.com/r3dacted42/stego.git)
+    git clone https://github.com/r3dacted42/stego.git
     cd stego
     ```
 - install dependencies:

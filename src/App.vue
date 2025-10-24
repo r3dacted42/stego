@@ -7,17 +7,6 @@
     <nav>
         <ul>
             <li>
-                <span>text</span>
-                <ul>
-                    <li>
-                        <RouterLink to="/text/encode">encode</RouterLink>
-                    </li>
-                    <li>
-                        <RouterLink to="/text/decode">decode</RouterLink>
-                    </li>
-                </ul>
-            </li>
-            <li>
                 <span>image</span>
                 <ul>
                     <li>
@@ -25,6 +14,17 @@
                     </li>
                     <li>
                         <RouterLink to="/image/decode">decode</RouterLink>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <span>text</span>
+                <ul>
+                    <li>
+                        <RouterLink to="/text/encode">encode</RouterLink>
+                    </li>
+                    <li>
+                        <RouterLink to="/text/decode">decode</RouterLink>
                     </li>
                 </ul>
             </li>

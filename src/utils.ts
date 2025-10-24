@@ -19,3 +19,7 @@ export async function getUrlAndNameFromB64(b64: string) {
     const url = URL.createObjectURL(blob);
     return { filename, url };
 }
+
+export function copyToClipboard(content?: string) {
+    if (content) navigator.clipboard.writeText(content);
+}
