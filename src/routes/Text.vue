@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import TextDecode from '../components/TextDecode.vue';
+import TextEncode from '../components/TextEncode.vue';
+
 
 defineProps({
     encode: Boolean,
@@ -7,15 +10,8 @@ defineProps({
 
 <template>
     <h2>text steganography</h2>
-    
-    <div v-if="encode">
-        encode
-    </div>
 
-    <div v-else>
-        decode
-    </div>
+    <TextEncode v-if="encode" />
+
+    <TextDecode v-else />
 </template>
-
-<style scoped>
-</style>

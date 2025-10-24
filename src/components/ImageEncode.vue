@@ -7,7 +7,7 @@ import type { ImgEncMsgSizeReq, ImgEncMsgSizeRes, ImgEncProcReq, ImgEncProcRes }
 
 const imageFile = ref<File>();
 const maxByteSize = ref(0);
-const msgType = ref('text');
+const msgType = ref<'text' | 'file'>('text');
 const message = ref('');
 const isEncoding = ref(false);
 const imgRef = useTemplateRef("preview-img");
@@ -15,7 +15,7 @@ const encImgSrc = ref('');
 
 const canChangePayload = computed(() => {
     return (!imageFile.value || isEncoding.value);
-})
+});
 
 const handleImageDropped = (img: File) => {
     imageFile.value = img;
@@ -71,6 +71,7 @@ encWorker.onmessage = (ev: MessageEvent<ImgEncProcRes>) => {
     canvas.height = imageData.height;
     const ctx = canvas.getContext('2d');
     ctx?.putImageData(imageData, 0, 0);
+    if (encImgSrc.value) URL.revokeObjectURL(encImgSrc.value);
     canvas.toBlob((blob) => {
         if (!blob) return;
         const url = URL.createObjectURL(blob);
@@ -97,15 +98,15 @@ const encodeImage = async () => {
 onBeforeUnmount(() => {
     msgSizeWorker.terminate();
     encWorker.terminate();
-    URL.revokeObjectURL(encImgSrc.value);
+    if (encImgSrc.value) URL.revokeObjectURL(encImgSrc.value);
 });
 </script>
 
 <template>
     <h3>encode</h3>
-    <p>select an image to encode with hidden data</p>
+    <p>select an image to encode with data</p>
     <ImageDropZone v-on:image-dropped="handleImageDropped" :disabled="isEncoding" />
-    
+
     <p>payload</p>
     <span class="msg-type">
         <label>
@@ -119,19 +120,19 @@ onBeforeUnmount(() => {
     </span>
     <textarea v-if="msgType === 'text'" :disabled="canChangePayload" v-model="message" rows="5"
         placeholder="super secret message..." :invalid="currentByteSize > maxByteSize" id="message"></textarea>
-    <input v-if="msgType === 'file'" @change="handlePayloadFileChange" type="file" :disabled="canChangePayload"></input>
+    <input v-if="msgType === 'file'" @change="handlePayloadFileChange" type="file" :disabled="canChangePayload" />
     <small class="full-width" style="text-align: end;">{{ currentByteSize }} / {{ maxByteSize ?? "?" }} bytes</small>
-    
-    <div class="full-width" style="display: flex; place-content: center;">
-        <button type="button" @click="encodeImage"
-            :disabled="!imageFile || (currentByteSize > maxByteSize) || isEncoding">
-            encode
-        </button>
-    </div>
+
+    <button type="button" @click="encodeImage"
+        :disabled="!imageFile || (currentByteSize > maxByteSize) || !currentByteSize || isEncoding">
+        encode
+    </button>
     <p></p>
     <label :aria-disabled="!encImgSrc" class="border img-div">
         <span v-if="!encImgSrc">encoded image preview</span>
-        <img :src="encImgSrc" ref="preview-img"></img>
+        <a :href="encImgSrc" :download="imageFile?.name">
+            <img :src="encImgSrc" ref="preview-img"></img>
+        </a>
     </label>
 </template>
 
@@ -141,6 +142,7 @@ onBeforeUnmount(() => {
     margin-bottom: 1em;
     display: flex;
     flex-direction: row;
+    gap: 1em;
 }
 
 .img-div {

@@ -4,7 +4,7 @@
 <template>
     <header>
         <h1>
-            <RouterLink to="/">stego</RouterLink>
+            <RouterLink to="/"><img src="/favicon.png">stego</RouterLink>
         </h1>
     </header>
     <nav>
@@ -43,6 +43,11 @@
 </template>
 
 <style scoped>
+h1 img {
+    max-height: 1em;
+    margin-right: 0.3em;
+}
+
 footer {
     text-align: center;
 }

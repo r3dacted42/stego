@@ -3,11 +3,8 @@ export interface ImgEncMsgSizeReq {
 }
 
 export type ImgEncMsgSizeRes = {
-    size: number;
-    error?: undefined;
-} | {
-    size?: undefined;
-    error: string;
+    size?: number;
+    error?: string;
 };
 
 export interface ImgEncProcReq {
@@ -16,11 +13,8 @@ export interface ImgEncProcReq {
 }
 
 export type ImgEncProcRes = {
-    imageData: ImageData;
-    error?: undefined;
-} | {
-    imageData?: undefined;
-    error: string;
+    imageData?: ImageData;
+    error?: string;
 };
 
 export interface ImgDecProcReq {
@@ -28,9 +22,25 @@ export interface ImgDecProcReq {
 }
 
 export type ImgDecProcRes = {
+    message?: string;
+    error?: string;
+};
+
+export interface TxtEncProcReq {
+    carrier: string;
     message: string;
-    error?: undefined;
-} | {
-    message?: undefined;
-    error: string;
+}
+
+export type TxtEncProcRes = {
+    encTxt?: string;
+    error?: string;
+};
+
+export interface TxtDecProcReq {
+    encTxt: string;
+}
+
+export type TxtDecProcRes = {
+    message?: string;
+    error?: string;
 };

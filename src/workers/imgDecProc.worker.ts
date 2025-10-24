@@ -5,7 +5,6 @@ declare const self: DedicatedWorkerGlobalScope;
 
 self.onmessage = (event: MessageEvent<ImgDecProcReq>) => {
     try {
-        console.log('Worker received bitmap for decoding');
         const { bitmap } = event.data;
 
         const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
@@ -20,7 +19,7 @@ self.onmessage = (event: MessageEvent<ImgDecProcReq>) => {
         bitmap.close();
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data; // [R,G,B,A, ...]
-        
+
         const totalPixels = Math.floor(data.length / 4);
         const totalAvailableBits = totalPixels * 3;
         if (totalAvailableBits < MESSAGE_LENGTH_HEADER_BYTES * 8) {
@@ -41,7 +40,7 @@ self.onmessage = (event: MessageEvent<ImgDecProcReq>) => {
 
                 const bit = data[bitIndex]! & 1; // LSB
                 byte = (byte << 1) | bit; // shift and add
-                
+
                 bitIndex++;
             }
             headerBytes[i] = byte;

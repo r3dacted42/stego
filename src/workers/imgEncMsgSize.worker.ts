@@ -5,7 +5,6 @@ declare const self: DedicatedWorkerGlobalScope;
 
 self.onmessage = (event: MessageEvent<ImgEncMsgSizeReq>) => {
     try {
-        console.log('Worker received bitmap for size calculation');
         const { bitmap } = event.data;
 
         const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);

@@ -9,11 +9,8 @@ defineProps({
 
 <template>
     <h2>image steganography</h2>
-    
+
     <ImageEncode v-if="encode" />
 
     <ImageDecode v-else />
 </template>
-
-<style scoped>
-</style>

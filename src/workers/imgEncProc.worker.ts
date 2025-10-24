@@ -5,7 +5,6 @@ declare const self: DedicatedWorkerGlobalScope;
 
 self.onmessage = (event: MessageEvent<ImgEncProcReq>) => {
     try {
-        console.log('Worker received bitmap and message for encoding');
         const { bitmap, message } = event.data;
 
         const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
@@ -51,7 +50,7 @@ self.onmessage = (event: MessageEvent<ImgEncProcReq>) => {
                 if (dataIndex >= data.length) {
                     throw new Error("unexpected EOF");
                 }
-                
+
                 const bit = (payloadByte! >> j) & 1;
                 const originalChannelValue = data[dataIndex];
                 if (bit === 1) {

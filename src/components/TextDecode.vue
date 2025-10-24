@@ -1,20 +1,15 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue';
-import ImageDropZone from './ImageDropZone.vue';
-import imgDecProcWorker from '../workers/imgDecProc.worker.ts?worker';
-import type { ImgDecProcReq, ImgDecProcRes } from '../workers/types';
+import txtDecProcWorker from '../workers/txtDecProc.worker.ts?worker';
+import type { TxtDecProcReq, TxtDecProcRes } from '../workers/types';
 
-const imageFile = ref<File>();
-const message = ref('');
-const fileAnchor = ref<{ href: string, name: string }>();
+const encodedTxt = ref('');
 const isDecoding = ref(false);
+const fileAnchor = ref<{ href: string, name: string }>();
+const message = ref('');
 
-const handleImageDropped = (img: File) => {
-    imageFile.value = img;
-};
-
-const decWorker = new imgDecProcWorker();
-decWorker.onmessage = (ev: MessageEvent<ImgDecProcRes>) => {
+const decWorker = new txtDecProcWorker();
+decWorker.onmessage = (ev: MessageEvent<TxtDecProcRes>) => {
     isDecoding.value = false;
     const { message: msg } = ev.data;
     if (!msg) return;
@@ -23,18 +18,17 @@ decWorker.onmessage = (ev: MessageEvent<ImgDecProcRes>) => {
 decWorker.onerror = (e) => {
     console.error("error in decWorker: ", e);
 }
-const decodeImage = async () => {
-    if (!imageFile.value) return;
+const decodeText = () => {
+    if (!encodedTxt.value) return;
     try {
         isDecoding.value = true;
-        const bitmap = await createImageBitmap(imageFile.value);
-        const req: ImgDecProcReq = { bitmap };
-        decWorker.postMessage(req, [bitmap]);
+        const req: TxtDecProcReq = { encTxt: encodedTxt.value };
+        decWorker.postMessage(req);
     } catch (error) {
         isDecoding.value = false;
-        console.error('Failed to create ImageBitmap:', error);
+        console.error('Failed to decode:', error);
     }
-}
+};
 
 watch(message, async (newMessage) => {
     if (!newMessage.startsWith('data:')) return;
@@ -68,10 +62,10 @@ onBeforeUnmount(() => {
 
 <template>
     <h3>decode</h3>
-    <p>select an image containing encoded data</p>
-    <ImageDropZone v-on:image-dropped="handleImageDropped" :disabled="isDecoding" />
+    <p>enter text containing encoded data</p>
+    <textarea v-model="encodedTxt" rows="5" placeholder="encoded text here..."></textarea>
     <p></p>
-    <button type="button" @click="decodeImage" :disabled="!imageFile || isDecoding">
+    <button type="button" @click="decodeText" :disabled="!encodedTxt || isDecoding">
         decode
     </button>
     <p></p>
