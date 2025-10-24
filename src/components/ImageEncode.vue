@@ -4,6 +4,7 @@ import ImageDropZone from './ImageDropZone.vue';
 import imgEncMsgSizeWorker from '../workers/imgEncMsgSize.worker.ts?worker';
 import imgEncProcWorker from '../workers/imgEncProc.worker.ts?worker';
 import type { ImgEncMsgSizeReq, ImgEncMsgSizeRes, ImgEncProcReq, ImgEncProcRes } from '../workers/types';
+import { getNamedB64 } from '../utils';
 
 const imageFile = ref<File>();
 const maxByteSize = ref(0);
@@ -12,6 +13,8 @@ const message = ref('');
 const isEncoding = ref(false);
 const imgRef = useTemplateRef("preview-img");
 const encImgSrc = ref('');
+const errorMsg = ref('');
+const dialogRef = useTemplateRef("err-dialog");
 
 const canChangePayload = computed(() => {
     return (!imageFile.value || isEncoding.value);
@@ -29,16 +32,15 @@ const handlePayloadFileChange = (ev: Event) => {
     reader.readAsDataURL(file);
     reader.onload = () => {
         const b64 = reader.result as string;
-        const splitIdx = b64.indexOf(';');
-        const mimePart = b64.substring(0, splitIdx);
-        const dataPart = b64.substring(splitIdx + 1);
-        message.value = `${mimePart};name=${encodeURIComponent(file.name)};${dataPart}`;
+        message.value = getNamedB64(b64, file.name);
     };
 }
 
 const msgSizeWorker = new imgEncMsgSizeWorker();
 msgSizeWorker.onmessage = (ev: MessageEvent<ImgEncMsgSizeRes>) => {
-    const { size } = ev.data;
+    const { size, error } = ev.data;
+    errorMsg.value = error ?? "";
+    if (error && dialogRef.value) dialogRef.value.showModal();
     if (!size) return;
     maxByteSize.value = size;
 };
@@ -52,7 +54,8 @@ watch((imageFile), async (newImageFile) => {
         const req: ImgEncMsgSizeReq = { bitmap };
         msgSizeWorker.postMessage(req, [bitmap]);
     } catch (error) {
-        console.error('Failed to create ImageBitmap:', error);
+        errorMsg.value = `failed to create ImageBitmap: ${error}`;
+        if (error && dialogRef.value) dialogRef.value.showModal();
     }
 });
 
@@ -64,14 +67,16 @@ const currentByteSize = computed(() => {
 const encWorker = new imgEncProcWorker();
 encWorker.onmessage = (ev: MessageEvent<ImgEncProcRes>) => {
     isEncoding.value = false;
-    const { imageData } = ev.data;
+    if (encImgSrc.value) URL.revokeObjectURL(encImgSrc.value);
+    const { imageData, error } = ev.data;
+    errorMsg.value = error ?? "";
+    if (error && dialogRef.value) dialogRef.value.showModal();
     if (!imageData || !imgRef.value) return;
     const canvas = document.createElement('canvas');
     canvas.width = imageData.width;
     canvas.height = imageData.height;
     const ctx = canvas.getContext('2d');
     ctx?.putImageData(imageData, 0, 0);
-    if (encImgSrc.value) URL.revokeObjectURL(encImgSrc.value);
     canvas.toBlob((blob) => {
         if (!blob) return;
         const url = URL.createObjectURL(blob);
@@ -91,7 +96,8 @@ const encodeImage = async () => {
         encWorker.postMessage(req, [bitmap]);
     } catch (error) {
         isEncoding.value = false;
-        console.error('Failed to create ImageBitmap:', error);
+        errorMsg.value = `failed to create ImageBitmap: ${error}`;
+        if (error && dialogRef.value) dialogRef.value.showModal();
     }
 }
 
@@ -134,6 +140,11 @@ onBeforeUnmount(() => {
             <img :src="encImgSrc" ref="preview-img"></img>
         </a>
     </label>
+
+    <dialog ref="err-dialog" closedby="none">
+        error: {{ errorMsg }} <br />
+        <button type="button" @click="dialogRef?.close()">okay</button>
+    </dialog>
 </template>
 
 <style scoped>

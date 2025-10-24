@@ -16,10 +16,11 @@ self.onmessage = (event: MessageEvent<TxtDecProcReq>) => {
 
         const payloadChars = encPayload.length;
         // 1 byte = 4 ZW chars (4 pairs of 2 bits).
-        const headerChars = MESSAGE_LENGTH_HEADER_BYTES * 4; // 16 ZW chars
+        const headerChars = MESSAGE_LENGTH_HEADER_BYTES * 4;
 
         if (payloadChars < headerChars) {
-            throw new Error("No message found or data is corrupted (header missing).");
+            self.postMessage({ error: "no message found or data is corrupted (header missing)." } as TxtDecProcRes);
+            return;
         }
 
         const totalBytes = Math.floor(payloadChars / 4);
@@ -29,15 +30,13 @@ self.onmessage = (event: MessageEvent<TxtDecProcReq>) => {
         for (let i = 0; i < payloadChars; i += 4) {
             const zwChunk = encPayload.substring(i, i + 4);
             if (zwChunk.length < 4) break;
-
-            // (pair3 << 6) | (pair2 << 4) | (pair1 << 2) | pair0
             const pair0 = ZW_CHARS.indexOf(zwChunk[0]!); // bits [1, 0]
             const pair1 = ZW_CHARS.indexOf(zwChunk[1]!); // bits [3, 2]
             const pair2 = ZW_CHARS.indexOf(zwChunk[2]!); // bits [5, 4]
             const pair3 = ZW_CHARS.indexOf(zwChunk[3]!); // bits [7, 6]
-
             if (pair0 === -1 || pair1 === -1 || pair2 === -1 || pair3 === -1) {
-                throw new Error(`Corrupted data: Invalid ZW char detected at chunk ${byteIndex}.`);
+                self.postMessage({ error: `corrupted data: invalid ZW char detected at chunk ${byteIndex}.` } as TxtDecProcRes);
+                return;
             }
 
             const byte = (pair3 << 6) | (pair2 << 4) | (pair1 << 2) | pair0;
@@ -53,7 +52,8 @@ self.onmessage = (event: MessageEvent<TxtDecProcReq>) => {
         const actualBodyBytes = payloadBytes.length - MESSAGE_LENGTH_HEADER_BYTES;
 
         if (expectedBodyBytes > actualBodyBytes) {
-            throw new Error(`Corrupted data: Header indicates ${expectedBodyBytes} bytes, but only ${actualBodyBytes} were found.`);
+            self.postMessage({ error: `corrupted data: header indicates ${expectedBodyBytes} bytes, but only ${actualBodyBytes} were found.` } as TxtDecProcRes);
+            return;
         }
 
         const messageBytes = payloadBytes.subarray(

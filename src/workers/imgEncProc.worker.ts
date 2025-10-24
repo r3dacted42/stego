@@ -11,7 +11,7 @@ self.onmessage = (event: MessageEvent<ImgEncProcReq>) => {
         const ctx = canvas.getContext('2d');
 
         if (!ctx) {
-            self.postMessage({ error: 'Failed to get OffscreenCanvas context' } as ImgEncProcRes);
+            self.postMessage({ error: 'failed to get OffscreenCanvas context' } as ImgEncProcRes);
             return;
         }
 
@@ -37,7 +37,7 @@ self.onmessage = (event: MessageEvent<ImgEncProcReq>) => {
         const totalAvailableBits = totalPixels * 3; // skip alpha channel
 
         if (totalPayloadBits > totalAvailableBits) {
-            self.postMessage({ error: `Message is too large (${messageLength} bytes) for this image (max ${Math.floor(totalAvailableBits / 8) - MESSAGE_LENGTH_HEADER_BYTES} bytes).` } as ImgEncProcRes);
+            self.postMessage({ error: `message is too large (${messageLength} bytes) for this image (max ${Math.floor(totalAvailableBits / 8) - MESSAGE_LENGTH_HEADER_BYTES} bytes).` } as ImgEncProcRes);
             return;
         }
 
@@ -48,7 +48,8 @@ self.onmessage = (event: MessageEvent<ImgEncProcReq>) => {
             for (let j = 7; j >= 0; j--) {
                 while (dataIndex % 4 === 3) dataIndex++; // skip alpha channel
                 if (dataIndex >= data.length) {
-                    throw new Error("unexpected EOF");
+                    self.postMessage({ error: "unexpected EOF while encoding message." } as ImgEncProcRes);
+                    return;
                 }
 
                 const bit = (payloadByte! >> j) & 1;
@@ -65,6 +66,7 @@ self.onmessage = (event: MessageEvent<ImgEncProcReq>) => {
 
         const response: ImgEncProcRes = { imageData };
         self.postMessage(response, [imageData.data.buffer]);
+
     } catch (e) {
         const error = e as Error;
         self.postMessage({ error: error.message } as ImgEncProcRes);

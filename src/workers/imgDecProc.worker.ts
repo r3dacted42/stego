@@ -11,7 +11,7 @@ self.onmessage = (event: MessageEvent<ImgDecProcReq>) => {
         const ctx = canvas.getContext('2d');
 
         if (!ctx) {
-            self.postMessage({ error: 'Failed to get OffscreenCanvas context' } as ImgDecProcRes);
+            self.postMessage({ error: 'failed to get OffscreenCanvas context' } as ImgDecProcRes);
             return;
         }
 
@@ -23,7 +23,7 @@ self.onmessage = (event: MessageEvent<ImgDecProcReq>) => {
         const totalPixels = Math.floor(data.length / 4);
         const totalAvailableBits = totalPixels * 3;
         if (totalAvailableBits < MESSAGE_LENGTH_HEADER_BYTES * 8) {
-            self.postMessage({ error: 'Image is too small to contain a message header.' } as ImgDecProcRes);
+            self.postMessage({ error: 'image is too small to contain a message header.' } as ImgDecProcRes);
             return;
         }
 
@@ -35,7 +35,8 @@ self.onmessage = (event: MessageEvent<ImgDecProcReq>) => {
             for (let j = 0; j < 8; j++) {
                 while (bitIndex % 4 === 3) bitIndex++; // skip alpha channel
                 if (bitIndex >= data.length) {
-                    throw new Error("unexpected EOF");
+                    self.postMessage({ error: "unexpected EOF while decoding header." } as ImgDecProcRes);
+                    return;
                 }
 
                 const bit = data[bitIndex]! & 1; // LSB
@@ -58,7 +59,7 @@ self.onmessage = (event: MessageEvent<ImgDecProcReq>) => {
         }
 
         if (requiredBits > remainingBits) {
-            self.postMessage({ error: `Corrupted data: Message length header is ${messageLength} bytes, but only ${Math.floor(remainingBits / 8)} bytes are available.` } as ImgDecProcRes);
+            self.postMessage({ error: `corrupted data: message length header is ${messageLength} bytes, but only ${Math.floor(remainingBits / 8)} bytes are available.` } as ImgDecProcRes);
             return;
         }
 
@@ -68,7 +69,8 @@ self.onmessage = (event: MessageEvent<ImgDecProcReq>) => {
             for (let j = 0; j < 8; j++) {
                 while (bitIndex % 4 === 3) bitIndex++; // skip alpha channel
                 if (bitIndex >= data.length) {
-                    throw new Error("unexpected EOF");
+                    self.postMessage({ error: "unexpected EOF while decoding message." } as ImgDecProcRes);
+                    return;
                 }
 
                 const bit = data[bitIndex]! & 1;
@@ -84,6 +86,7 @@ self.onmessage = (event: MessageEvent<ImgDecProcReq>) => {
 
         const response: ImgDecProcRes = { message };
         self.postMessage(response);
+
     } catch (e) {
         const error = e as Error;
         self.postMessage({ error: error.message } as ImgDecProcRes);

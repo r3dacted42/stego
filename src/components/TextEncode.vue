@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, useTemplateRef } from 'vue';
 import txtEncProcWorker from '../workers/txtEncProc.worker.ts?worker';
 import type { TxtEncProcReq, TxtEncProcRes } from '../workers/types';
+import { getNamedB64 } from '../utils';
 
 const carrierTxt = ref('');
 const secretType = ref<'text' | 'file'>('text');
 const secretTxt = ref('');
 const isEncoding = ref(false);
 const encodedTxt = ref('');
+const errorMsg = ref('');
+const dialogRef = useTemplateRef("err-dialog");
 
 const canChangePayload = computed(() => {
     return (!carrierTxt.value || isEncoding.value);
@@ -21,17 +24,16 @@ const handlePayloadFileChange = (ev: Event) => {
     reader.readAsDataURL(file);
     reader.onload = () => {
         const b64 = reader.result as string;
-        const splitIdx = b64.indexOf(';');
-        const mimePart = b64.substring(0, splitIdx);
-        const dataPart = b64.substring(splitIdx + 1);
-        secretTxt.value = `${mimePart};name=${encodeURIComponent(file.name)};${dataPart}`;
+        secretTxt.value = getNamedB64(b64, file.name);
     };
 }
 
 const encWorker = new txtEncProcWorker();
 encWorker.onmessage = (ev: MessageEvent<TxtEncProcRes>) => {
     isEncoding.value = false;
-    const { encTxt } = ev.data;
+    const { encTxt, error } = ev.data;
+    errorMsg.value = error ?? "";
+    if (error && dialogRef.value) dialogRef.value.showModal();
     if (!encTxt) return;
     encodedTxt.value = encTxt;
 }
@@ -47,7 +49,8 @@ const encodeText = () => {
         encWorker.postMessage(req);
     } catch (error) {
         isEncoding.value = false;
-        console.error('Failed to encode:', error);
+        errorMsg.value = `failed to encode: ${error}`;
+        if (error && dialogRef.value) dialogRef.value.showModal();
     }
 };
 
@@ -80,14 +83,19 @@ onBeforeUnmount(() => {
         placeholder="super secret message..."></textarea>
     <input v-if="secretType === 'file'" @change="handlePayloadFileChange" type="file" :disabled="canChangePayload" />
     <p></p>
-    <button type="button" @click="encodeText">
-        encode
+    <button type="button" :disabled="isEncoding" @click="encodeText">
+        {{ isEncoding ? "encoding..." : "encode" }}
     </button>
 
     <label @click="copyToClipboard" title="click to copy">
         <textarea v-model="encodedTxt" rows="5" placeholder="encoded text" readonly></textarea>
         <small style="width: 100%; text-align: end;">click to copy encoded text</small>
     </label>
+
+    <dialog ref="err-dialog" closedby="none">
+        error: {{ errorMsg }} <br />
+        <button type="button" @click="dialogRef?.close()">okay</button>
+    </dialog>
 </template>
 
 <style scoped>

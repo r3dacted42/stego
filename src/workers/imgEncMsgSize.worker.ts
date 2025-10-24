@@ -11,7 +11,7 @@ self.onmessage = (event: MessageEvent<ImgEncMsgSizeReq>) => {
         const ctx = canvas.getContext('2d');
 
         if (!ctx) {
-            self.postMessage({ error: 'Failed to get OffscreenCanvas context' } as ImgEncMsgSizeRes);
+            self.postMessage({ error: 'failed to get OffscreenCanvas context' } as ImgEncMsgSizeRes);
             return;
         }
 
@@ -27,6 +27,7 @@ self.onmessage = (event: MessageEvent<ImgEncMsgSizeReq>) => {
 
         const response: ImgEncMsgSizeRes = { size: maxMessageSizeInBytes };
         self.postMessage(response);
+
     } catch (e) {
         const error = e as Error;
         self.postMessage({ error: error.message } as ImgEncMsgSizeRes);
